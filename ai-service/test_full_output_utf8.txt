@@ -1,0 +1,111 @@
+﻿python : Warning: You are sending unauthenticated 
+requests to the HF Hub. Please set a HF_TOKEN to 
+enable higher rate limits and faster downloads.
+At line:1 char:1
++ python run_tests.py > test_full_output.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: 
+(Warning:     You ar...ster downloads.:String) [], 
+RemoteExcep    tion
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+============================================================
+  TEST 1 ù normalize_numbers
+============================================================
+  [[92mPASS[0m] 10k -> 10000
+  [[92mPASS[0m] 15 hazaar -> 15000
+  [[92mPASS[0m] 50 lakh -> 5000000
+  [[92mPASS[0m] 2 crore -> 20000000
+  [[92mPASS[0m] 5.5k -> 5500
+  [[92mPASS[0m] plain text unchanged
+
+============================================================
+  TEST 2 ù detect_language
+============================================================
+  [[92mPASS[0m] English only
+  [[92mPASS[0m] Hinglish (hazaar)
+  [[92mPASS[0m] Hinglish (kya)
+  [[92mPASS[0m] Tamil keyword
+  [[92mPASS[0m] Telugu keyword
+  [[91mFAIL[0m] Hindi only
+         Got:      'english'
+         Expected: 'hinglish'
+
+============================================================
+  TEST 3 ù calculate_risk
+============================================================
+  [[92mPASS[0m] EMI 31% ratio -> medium (50)
+  [[92mPASS[0m] EMI 50% ratio -> high (80)
+  [[92mPASS[0m] EMI 6% ratio -> low (20)
+  [[92mPASS[0m] No EMI/income -> low (0)
+  [[92mPASS[0m] Uncertainty bump -> min(80,100) -> high
+  [[92mPASS[0m] Low EMI + uncertainty -> 50 medium
+
+============================================================
+  TEST 4 ù infer_estimated_income
+============================================================
+  [[92mPASS[0m] Salary regex match -> 80000
+  [[92mPASS[0m] Income regex match -> 50000
+  [[92mPASS[0m] Fallback emi*3 -> 60000
+  [[92mPASS[0m] No data -> None
+
+============================================================
+  TEST 5 ù extract_financial_entities
+============================================================
+  [[92mPASS[0m] EMI extracted
+  [[92mPASS[0m] SIP extracted
+  [[92mPASS[0m] Loan extracted
+  [[92mPASS[0m] All three entities
+  [[92mPASS[0m] Non-financial -> all None
+
+============================================================
+  TEST 6 ù _fallback_financial_detection
+============================================================
+  [[92mPASS[0m] Multi-keyword -> financial
+  [[92mPASS[0m] Non-financial -> not financial
+  [[92mPASS[0m] Salary keyword -> financial
+
+============================================================
+  TEST 7 ù extract_json
+============================================================
+  [[92mPASS[0m] Plain JSON parse
+  [[92mPASS[0m] Whitespace stripped JSON
+  [[92mPASS[0m] Invalid JSON raises ValueError
+
+============================================================
+  TEST 8 ù build_financial_advice
+============================================================
+  [[92mPASS[0m] 3 advice points for all entities + high risk
+  [[92mPASS[0m] No entities -> generic advice
+  [[92mPASS[0m] EMI only advice
+
+============================================================
+  TEST 9 ù Full pipeline (analyze_financial_conversation)
+============================================================
+
+Loading weights:   0%|          | 0/515 [00:00<?, 
+?it/s]
+Loading weights: 100%|##########| 515/515 
+[00:00<00:00, 11437.76it/s]
+  [[92mPASS[0m] 9a: transcription set
+  [[92mPASS[0m] 9a: is_financial=True
+  [[92mPASS[0m] 9a: language=english
+  [[92mPASS[0m] 9a: loan_amount extracted
+  [[92mPASS[0m] 9a: emi extracted
+  [[92mPASS[0m] 9a: estimated_income set
+  [[92mPASS[0m] 9a: risk_score >= 50
+  [[92mPASS[0m] 9a: risk_level=high
+  [[92mPASS[0m] 9a: advice list non-empty
+  [[92mPASS[0m] 9a: summary non-empty
+  [[92mPASS[0m] 9b: non-financial text
+  [[92mPASS[0m] 9b: risk_score=0
+  [[92mPASS[0m] 9c: hinglish detected
+  [[92mPASS[0m] 9c: financial detected
+  [[92mPASS[0m] 9d: short text no crash
+
+============================================================
+  RESULTS: 50/51 tests passed
+  [91m1 FAILURES[0m ù see above for details
+============================================================
+
