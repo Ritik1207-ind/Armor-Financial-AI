@@ -13,32 +13,67 @@ export default function Upload() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [result, setResult] = useState(null);
     const [textInput, setTextInput] = useState("");
+    
+    // MEDIA RECORDER STATE
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
     const fileInputRef = useRef(null);
     
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) audioChunksRef.current.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                const file = new File([audioBlob], "recording.webm", { type: 'audio/webm' });
+                processInteraction({ audio_file: file, user_id: 'test_user_123', input_type: 'audio' });
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+            setResult(null);
+        } catch (err) {
+            console.error("Microphone access denied", err);
+            alert("Could not access microphone. Please check permissions.");
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current) {
+            mediaRecorderRef.current.stop();
+            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+            setIsRecording(false);
+        }
+    };
+
     const handleRecordToggle = () => {
         if (isRecording) {
-            setIsRecording(false);
-            processInteraction({ text: "Simulated audio transcript: EMI manage ho jayega kya?" });
+            stopRecording();
         } else {
-            setResult(null);
-            setIsRecording(true);
+            startRecording();
         }
     };
 
     const handleTextSubmit = (e) => {
         e.preventDefault();
         if (!textInput.trim()) return;
-        processInteraction({ text: textInput });
+        processInteraction({ text: textInput, user_id: 'test_user_123', input_type: 'text' });
     };
 
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        // Mock processing the file
-        processInteraction({ text: `Simulated audio from file: ${file.name}` });
+        processInteraction({ audio_file: file, user_id: 'test_user_123', input_type: 'audio' });
     };
 
     const processInteraction = async (payload) => {
@@ -49,6 +84,7 @@ export default function Upload() {
             dispatch(addConversation(data));
         } catch (error) {
             console.error("Failed to process", error);
+            alert("Error: " + (error.response?.data?.message || "AI Analysis Failed. Check if Server and AI-Service are running."));
         } finally {
             setIsProcessing(false);
         }
@@ -58,7 +94,7 @@ export default function Upload() {
         <div className="space-y-6 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Capture Intelligence</h1>
-                <p className="text-slate-500 dark:text-slate-400 mt-1">Record a financial conversation or enter text directly.</p>
+                <p className="text-slate-500 dark:text-slate-400 mt-1">Record a real-time financial conversation or upload audio.</p>
             </div>
 
             <Card className="overflow-hidden border-2 border-transparent transition-all duration-300 hover:border-blue-500/20">
@@ -81,7 +117,7 @@ export default function Upload() {
                         <p className="text-sm text-slate-500 max-w-sm mx-auto">
                             {isRecording 
                                 ? "Speak naturally. We automatically detect languages and extract financial entities." 
-                                : "Click the button below to start capturing a real-time conversation."}
+                                : "Click the button below to start capturing a real-time conversation via your microphone."}
                         </p>
                     </div>
 
@@ -94,11 +130,11 @@ export default function Upload() {
                             disabled={isProcessing}
                         >
                             {isProcessing ? (
-                                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing...</>
+                                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Analyzing...</>
                             ) : isRecording ? (
-                                <><Square className="mr-2 h-5 w-5 fill-current" /> Stop Recording</>
+                                <><Square className="mr-2 h-5 w-5 fill-current" /> Stop & Finalize</>
                             ) : (
-                                <><Mic className="mr-2 h-5 w-5" /> Record</>
+                                <><Mic className="mr-2 h-5 w-5" /> Start Recording</>
                             )}
                         </Button>
                         
@@ -110,6 +146,7 @@ export default function Upload() {
                                     className="hidden" 
                                     ref={fileInputRef} 
                                     onChange={handleFileUpload} 
+                                    disabled={isProcessing}
                                 />
                                 <Button 
                                     size="lg" 
@@ -118,7 +155,7 @@ export default function Upload() {
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={isProcessing}
                                 >
-                                    <UploadCloud className="mr-2 h-5 w-5" /> Upload File
+                                    <UploadCloud className="mr-2 h-5 w-5" /> Upload Audio
                                 </Button>
                             </>
                         )}
@@ -138,13 +175,13 @@ export default function Upload() {
                         <input 
                             type="text" 
                             className="flex-1 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="e.g. EMI manage ho jayega kya?"
+                            placeholder="e.g. Can you manage my car loan EMI?"
                             value={textInput}
                             onChange={(e) => setTextInput(e.target.value)}
                             disabled={isRecording || isProcessing}
                         />
                         <Button type="submit" disabled={isRecording || isProcessing || !textInput.trim()}>
-                            Analyze
+                            Analyze Text
                         </Button>
                     </form>
                 </CardContent>
@@ -157,11 +194,11 @@ export default function Upload() {
                     <div>
                         <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-100">Analysis Complete!</h3>
                         <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-1 max-w-md mx-auto">
-                            "{result.summary}"
+                            "{result.summary || "Conversation processed successfully."}"
                         </p>
                     </div>
                     <Button variant="outline" onClick={() => navigate('/history')} className="mt-2 bg-white dark:bg-[#020617] border-emerald-200 dark:border-emerald-800">
-                        View in History
+                        View Full Details
                     </Button>
                 </div>
             )}
