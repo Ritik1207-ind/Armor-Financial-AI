@@ -14,6 +14,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/conversation', conversationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
+// Health check endpoint
+app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+
 // Error Handling Middleware should be the last middleware
 app.use(errorHandler);
 

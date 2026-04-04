@@ -51,23 +51,29 @@ exports.getDashboard = async (req, res, next) => {
 
     // Map recent conversations to match frontend expectations (id and snippet)
     const recent = conversations.slice(-5).reverse().map(c => {
-      const insight = insights.find(i => i.conversation_id.toString() === c._id.toString());
-      return {
-        id: c._id,
-        date: c.createdAt ? c.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        snippet: insight ? insight.summary : `Conversation about ${c.input_type}`,
-        risk_level: c.risk_level || 'low'
-      };
+      try {
+        const insight = insights.find(i => i.conversation_id && i.conversation_id.toString() === c._id.toString());
+        return {
+          id: c._id.toString(),
+          _id: c._id, // Keep original too
+          date: c.createdAt ? c.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          snippet: insight ? (insight.summary || "No summary available") : `Conversation about ${c.input_type || 'financials'}`,
+          risk_level: c.risk_level || 'low',
+          status: c.status || 'processed'
+        };
+      } catch (e) {
+        return { id: c._id.toString(), snippet: 'Error loading details', date: '---', risk_level: 'low' };
+      }
     });
 
     res.json({
-      total_conversations,
-      risk_trend,
-      confidence_trend,
-      entity_distribution,
-      sentiment_distribution,
-      recent_conversations: recent,
-      key_insights: insights.slice(-5)
+      total_conversations: total_conversations || 0,
+      risk_trend: risk_trend || [],
+      confidence_trend: confidence_trend || [],
+      entity_distribution: entity_distribution || { emi: 0, loan: 0, sip: 0 },
+      sentiment_distribution: sentiment_distribution || { positive: 0, neutral: 0, negative: 0 },
+      recent_conversations: recent || [],
+      key_insights: insights.slice(-5) || []
     });
   } catch (error) {
     next(error);
