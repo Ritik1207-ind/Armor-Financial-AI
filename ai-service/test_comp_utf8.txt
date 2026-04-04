@@ -1,0 +1,235 @@
+﻿python : Warning: You are sending unauthenticated 
+requests to the HF Hub. Please set a HF_TOKEN to 
+enable higher rate limits and faster downloads.
+At line:1 char:1
++ python test_comprehensive.py > test_comp_output.txt 
+2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~
+    + CategoryInfo          : NotSpecified: (Warni    
+ng: You ar...ster downloads.:String) [], Remot    
+eException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+============================================================
+  TEST 1 ù normalize_numbers
+============================================================
+  [[92mPASS[0m] 10k -> 10000
+  [[92mPASS[0m] 15 hazaar -> 15000
+  [[92mPASS[0m] 50 lakh -> 5000000
+  [[92mPASS[0m] 2 crore -> 20000000
+  [[92mPASS[0m] 5.5k -> 5500
+  [[92mPASS[0m] plain unchanged
+  [[92mPASS[0m] 1.5 lakh -> 150000
+  [[92mPASS[0m] 2.5 crore -> 25000000
+  [[92mPASS[0m] 3.2k -> 3200
+  [[92mPASS[0m] 10K uppercase
+  [[92mPASS[0m] 5 Lakh mixed case
+  [[92mPASS[0m] 1 Crore mixed case
+  [[92mPASS[0m] multiple: 10k and 5k
+  [[92mPASS[0m] hazar alt spelling
+  [[92mPASS[0m] thousand keyword
+  [[92mPASS[0m] lac alternative
+  [[92mPASS[0m] cr shorthand
+  [[92mPASS[0m] plain number stays
+  [[92mPASS[0m] empty string
+  [[92mPASS[0m] just 20k
+
+============================================================
+  TEST 2 ù detect_language
+============================================================
+  [[92mPASS[0m] Pure English sentence
+  [[92mPASS[0m] English finance text
+  [[92mPASS[0m] English question
+  [[92mPASS[0m] Hinglish hazaar
+  [[92mPASS[0m] Hinglish kya
+  [[92mPASS[0m] Hinglish mujhe
+  [[92mPASS[0m] Hinglish kitna
+  [[92mPASS[0m] Hinglish mera
+  [[92mPASS[0m] Hinglish complex
+  [[92mPASS[0m] Tamil keywords
+  [[92mPASS[0m] Tamil enna
+  [[92mPASS[0m] Telugu keywords
+  [[92mPASS[0m] Telugu cheppu
+  [[92mPASS[0m] Single English word
+  [[92mPASS[0m] Single Hindi word
+  [[92mPASS[0m] Only numbers
+  [[92mPASS[0m] Whitespace-heavy
+  [[92mPASS[0m] Multi-lang keywords
+
+============================================================
+  TEST 3 ù calculate_risk
+============================================================
+  [[92mPASS[0m] 31% ratio -> medium
+  [[92mPASS[0m] 50% ratio -> high
+  [[92mPASS[0m] 6% ratio -> low
+  [[92mPASS[0m] No data -> low
+  [[92mPASS[0m] kya safe hai bump
+  [[92mPASS[0m] puriyala bump
+  [[92mPASS[0m] should we bump
+  [[92mPASS[0m] 20% ratio boundary
+  [[92mPASS[0m] 40% ratio boundary
+  [[92mPASS[0m] 41% ratio -> high
+  [[92mPASS[0m] High + uncertainty cap
+  [[92mPASS[0m] 1% ratio -> low
+  [[92mPASS[0m] 90% ratio -> high
+  [[92mPASS[0m] Zero income -> low
+  [[92mPASS[0m] Uncertainty only
+  [[92mPASS[0m] EMI no income -> low
+  [[92mPASS[0m] No EMI with income
+  [[92mPASS[0m] EMI > income -> high
+  [[92mPASS[0m] Multiple uncertainty
+  [[92mPASS[0m] Clean text no bump
+
+============================================================
+  TEST 4 ù infer_estimated_income
+============================================================
+  [[92mPASS[0m] salary keyword
+  [[92mPASS[0m] income keyword
+  [[92mPASS[0m] earn keyword
+  [[92mPASS[0m] monthly income
+  [[92mPASS[0m] 60000 salary
+  [[92mPASS[0m] 75000 per month
+  [[92mPASS[0m] Fallback emi*3
+  [[92mPASS[0m] Fallback small emi
+  [[92mPASS[0m] No entities -> None
+  [[92mPASS[0m] Empty text -> None
+  [[92mPASS[0m] EMI zero -> None
+  [[92mPASS[0m] SIP no EMI -> None
+  [[92mPASS[0m] Regex over fallback
+  [[92mPASS[0m] Large salary
+  [[92mPASS[0m] Trailing salary
+
+============================================================
+  TEST 5 ù extract_financial_entities
+============================================================
+  [[92mPASS[0m] EMI basic
+  [[92mPASS[0m] SIP basic
+  [[92mPASS[0m] Loan basic
+  [[92mPASS[0m] All three
+  [[92mPASS[0m] Non-financial all None
+  [[92mPASS[0m] Installment keyword
+  [[92mPASS[0m] Mortgage keyword
+  [[92mPASS[0m] Credit keyword
+  [[92mPASS[0m] SIP no number
+  [[92mPASS[0m] EMI too small (2 digit)
+  [[92mPASS[0m] EMI large number
+  [[92mPASS[0m] Empty text
+  [[92mPASS[0m] Loan first amount
+  [[92mPASS[0m] Number before EMI
+  [[92mPASS[0m] SIP 10000
+  [[92mPASS[0m] Only loan
+  [[92mPASS[0m] Only EMI
+  [[92mPASS[0m] Only SIP
+  [[92mPASS[0m] EMI in mixed context
+
+============================================================
+  TEST 6 ù _fallback_financial_detection
+============================================================
+  [[92mPASS[0m] Multi-keyword financial
+  [[92mPASS[0m] Score > 0.5 multi
+  [[92mPASS[0m] Salary financial
+  [[92mPASS[0m] Investment keyword
+  [[92mPASS[0m] Insurance keyword
+  [[92mPASS[0m] Budget keyword
+  [[92mPASS[0m] Debt keyword
+  [[92mPASS[0m] Credit keyword
+  [[92mPASS[0m] Stock keyword
+  [[92mPASS[0m] Non-financial weather
+  [[92mPASS[0m] Non-financial movie
+  [[92mPASS[0m] Non-financial food
+  [[92mPASS[0m] Empty text
+  [[92mPASS[0m] Single keyword score
+  [[92mPASS[0m] Max keywords score cap
+
+============================================================
+  TEST 7 ù extract_json
+============================================================
+  [[92mPASS[0m] Plain JSON
+  [[92mPASS[0m] Whitespace JSON
+  [[92mPASS[0m] Nested JSON
+  [[92mPASS[0m] Array in JSON
+  [[92mPASS[0m] Boolean JSON
+  [[92mPASS[0m] Null JSON
+  [[92mPASS[0m] ```json wrapper
+  [[92mPASS[0m] ``` wrapper
+  [[92mPASS[0m] Invalid raises ValueError
+  [[92mPASS[0m] Empty raises ValueError
+  [[92mPASS[0m] Complex nested
+  [[92mPASS[0m] Escaped quotes
+
+============================================================
+  TEST 8 ù build_financial_advice
+============================================================
+  [[92mPASS[0m] All entities high -> 3
+  [[92mPASS[0m] EMI mentioned
+  [[92mPASS[0m] SIP mentioned
+  [[92mPASS[0m] No entities -> 1 generic
+  [[92mPASS[0m] EMI only -> 1
+  [[92mPASS[0m] EMI only mentions EMI
+  [[92mPASS[0m] SIP only -> 1
+  [[92mPASS[0m] SIP only mentions SIP
+  [[92mPASS[0m] Loan + high -> 2
+  [[92mPASS[0m] Cap at 3
+  [[92mPASS[0m] No entities medium -> 1
+
+============================================================
+
+  TEST 9 ù Full pipeline (analyze_financial_conversation)
+============================================================
+Loading weights:   0%|          | 0/515 [00:00<?, 
+?it/s]
+Loading weights: 100%|##########| 515/515 
+[00:00<00:00, 8764.76it/s]
+  [[92mPASS[0m] 9a: transcription set
+  [[92mPASS[0m] 9a: is_financial=True
+  [[92mPASS[0m] 9a: language=english
+  [[92mPASS[0m] 9a: loan_amount exists
+  [[92mPASS[0m] 9a: emi exists
+  [[92mPASS[0m] 9a: income set
+  [[92mPASS[0m] 9a: risk_score >= 50
+  [[92mPASS[0m] 9a: risk_level=high
+  [[92mPASS[0m] 9a: advice non-empty
+  [[92mPASS[0m] 9a: summary non-empty
+  [[92mPASS[0m] 9a: has confidence
+  [[92mPASS[0m] 9b: non-financial
+  [[92mPASS[0m] 9b: risk_score=0
+  [[92mPASS[0m] 9b: risk_level=low
+  [[92mPASS[0m] 9b: has transcription
+  [[92mPASS[0m] 9c: hinglish detected
+  [[92mPASS[0m] 9c: financial detected
+  [[92mPASS[0m] 9c: has entities
+  [[92mPASS[0m] 9d: short text no crash
+  [[92mPASS[0m] 9d: has all keys
+  [[92mPASS[0m] 9e: SIP financial
+  [[92mPASS[0m] 9e: SIP extracted
+  [[92mPASS[0m] 9f: loan detected
+  [[92mPASS[0m] 9f: loan amount
+  [[92mPASS[0m] 9f: risk low (no emi)
+  [[92mPASS[0m] 9g: financial mixed
+  [[92mPASS[0m] 9g: entities extracted
+  [[92mPASS[0m] 9h: numeric no crash
+  [[92mPASS[0m] 9i: whitespace no crash
+  [[92mPASS[0m] 9j: tamil financial
+  [[92mPASS[0m] 9j: tamil lang
+
+============================================================
+  TOTAL: 161 tests | PASSED: 161 | FAILED: 0
+Traceback (most recent call last):
+  File "C:\Users\RITIK SINHA\Downloads\Elite-Barbarian
+s-codex\Elite-Barbarians\ai-service\test_comprehensive
+.py", line 535, in <module>
+    print(f"  \033[92mAll {total} tests PASSED 
+\u2705\033[0m")
+    
+~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 
+19, in encode
+    return codecs.charmap_encode(input,self.errors,enc
+oding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode 
+character '\u2705' in position 28: character maps to 
+<undefined>

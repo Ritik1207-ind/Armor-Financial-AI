@@ -1,0 +1,21 @@
+# Armor AI Service - Dependencies
+# FastAPI + Server
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+python-multipart>=0.0.18
+
+# HTTP Client (async)
+httpx>=0.28.0
+
+# Environment
+python-dotenv>=1.0.0
+
+# Schema Validation
+pydantic>=2.10.0
+
+# AI / NLP stack from the problem statement
+openai>=1.75.0
+transformers>=4.50.0
+huggingface-hub>=0.30.0
+spacy>=3.8.0
+torch>=2.6.0
