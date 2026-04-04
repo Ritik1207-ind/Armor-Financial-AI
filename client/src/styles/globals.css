@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  
+  --color-background: var(--bg-color);
+  --color-foreground: var(--fg-color);
+  --color-card: var(--card-color);
+  --color-primary: var(--primary-color);
+  --color-primary-foreground: var(--primary-fg-color);
+  --color-border: var(--border-color);
+}
+
+:root {
+  --bg-color: #f8fafc;
+  --fg-color: #0f172a;
+  --card-color: #ffffff;
+  --primary-color: #3b82f6; 
+  --primary-fg-color: #ffffff;
+  --border-color: #e2e8f0;
+}
+
+.dark {
+  --bg-color: #020617;
+  --fg-color: #f8fafc;
+  --card-color: #0f172a;
+  --primary-color: #3b82f6;
+  --primary-fg-color: #ffffff;
+  --border-color: #1e293b;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--fg-color);
+  font-family: "Inter", system-ui, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Animations for Audio Visualizer */
+@keyframes soundwave {
+  0% { transform: scaleY(0.5); opacity: 0.7; }
+  50% { transform: scaleY(1.5); opacity: 1; }
+  100% { transform: scaleY(0.5); opacity: 0.7; }
+}
+
+.animate-soundwave {
+  animation: soundwave 1.2s infinite ease-in-out;
+}
