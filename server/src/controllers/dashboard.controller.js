@@ -14,33 +14,51 @@ exports.getDashboard = async (req, res, next) => {
     let total_conversations = conversations.length;
     
     for (const conv of conversations) {
-      const dateStr = conv.createdAt.toISOString().split('T')[0];
+      // Ensure createdAt exists
+      const dateStr = conv.createdAt ? conv.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
       
-      if (conv.risk_score) {
+      // Push risk score (even if 0)
+      if (conv.risk_score !== undefined) {
         risk_trend.push({ date: dateStr, risk_score: conv.risk_score });
       }
       
       if (conv.sentiment) {
-        if (conv.sentiment.includes('positive') || conv.sentiment === 'good') sentiment_distribution.positive++;
-        else if (conv.sentiment.includes('negative') || conv.sentiment === 'bad') sentiment_distribution.negative++;
+        const s = conv.sentiment.toLowerCase();
+        if (s.includes('positive') || s === 'good') sentiment_distribution.positive++;
+        else if (s.includes('negative') || s === 'bad') sentiment_distribution.negative++;
         else sentiment_distribution.neutral++;
+      } else {
+        sentiment_distribution.neutral++;
       }
     }
 
-    const insights = await Insight.find({ conversation_id: { $in: conversations.map(c => c._id) } });
+    const convIds = conversations.map(c => c._id);
+    const insights = await Insight.find({ conversation_id: { $in: convIds } });
 
     const entity_distribution = { emi: 0, loan: 0, sip: 0 };
 
     for (const inst of insights) {
-      if (inst.confidence_score) {
-        confidence_trend.push({ date: inst.createdAt.toISOString().split('T')[0], confidence: inst.confidence_score });
+      const dateStr = inst.createdAt ? inst.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      if (inst.confidence_score !== undefined) {
+        confidence_trend.push({ date: dateStr, confidence: inst.confidence_score });
       }
       if (inst.entities) {
-        if (inst.entities.emis) entity_distribution.emi += inst.entities.emis.length;
-        if (inst.entities.loans) entity_distribution.loan += inst.entities.loans.length;
-        if (inst.entities.sips) entity_distribution.sip += inst.entities.sips.length;
+        if (Array.isArray(inst.entities.emis)) entity_distribution.emi += inst.entities.emis.length;
+        if (Array.isArray(inst.entities.loans)) entity_distribution.loan += inst.entities.loans.length;
+        if (Array.isArray(inst.entities.sips)) entity_distribution.sip += inst.entities.sips.length;
       }
     }
+
+    // Map recent conversations to match frontend expectations (id and snippet)
+    const recent = conversations.slice(-5).reverse().map(c => {
+      const insight = insights.find(i => i.conversation_id.toString() === c._id.toString());
+      return {
+        id: c._id,
+        date: c.createdAt ? c.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        snippet: insight ? insight.summary : `Conversation about ${c.input_type}`,
+        risk_level: c.risk_level || 'low'
+      };
+    });
 
     res.json({
       total_conversations,
@@ -48,7 +66,7 @@ exports.getDashboard = async (req, res, next) => {
       confidence_trend,
       entity_distribution,
       sentiment_distribution,
-      recent_conversations: conversations.slice(-5).reverse(),
+      recent_conversations: recent,
       key_insights: insights.slice(-5)
     });
   } catch (error) {
