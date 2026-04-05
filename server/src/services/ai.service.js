@@ -15,7 +15,7 @@ const predict = async (inputType, data, languageHint = 'auto', filename = null) 
     };
 
     const response = await axios.post(`${AI_URL}/predict`, payload, {
-      timeout: 90000
+      timeout: 120000
     });
 
     return response.data;

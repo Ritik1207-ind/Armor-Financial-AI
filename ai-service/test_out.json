@@ -1,0 +1,69 @@
+{
+  "transcription": "Main ek 24 saal ka software engineer hoon jo Infosys me kaam karta hoon. Meri monthly salary \u20b965,000 hai (in-hand).\n\nMere upar ek home loan chal raha hai jo maine State Bank of India se liya tha \u20b930,00,000 ka, interest rate 8.7% annual hai aur tenure 20 saal ka hai.\nIska EMI \u20b926,500 per month jaata hai.\n\nIske alawa maine ek personal loan bhi liya tha \u20b93,00,000 ka from HDFC Bank, jiska interest rate 13% hai aur EMI \u20b97,200 per month hai (remaining tenure 3 saal).\n\nMere fixed monthly expenses kuch is type ke hain:\n\nRent + maintenance: \u20b98,000\nFood & groceries: \u20b96,000\nTravel & fuel: \u20b93,500\nSubscriptions (Netflix, Spotify etc): \u20b91,000\n\nTotal expenses approx \u20b918,500 ho jaate hain EMI ke alawa.\n\nInvestments ki baat karu to:\n\n\u20b910,000 monthly SIP in equity mutual funds (via Zerodha)\n\u20b93,000 SIP in ELSS (tax saving)\n\u20b92,000 crypto me daal deta hoon (kabhi kabhi loss bhi hota hai \ud83d\ude05)\n\nMere paas \u20b91,20,000 ka emergency fund hai savings account me.\n\nGoals:\n\n5 saal me \u20b910 lakh ka corpus banana hai\n10 saal me ek aur property leni hai\n\nConcern:\nMujhe lagta hai ki mere upar loans thode zyada ho gaye hain aur savings utni fast grow nahi ho rahi jitni honi chahiye. Kabhi kabhi SIP skip bhi ho jata hai agar extra expense aa jaye.\n\nKya mujhe apna personal loan pehle close karna chahiye ya SIP continue rakhna chahiye? Aur kya meri financial planning sahi direction me hai?",
+  "language": "hinglish",
+  "is_financial": true,
+  "entities": {
+    "emi": 26500,
+    "sip": 10000,
+    "loan_amount": 3000000,
+    "income": 65000,
+    "emi_amount": 33700,
+    "sip_amount": 13000,
+    "rate_of_interest_loan": 8.7,
+    "rate_of_interest_investment": null,
+    "loan_tenure_years": 20,
+    "banks_mentioned": [
+      "HDFC",
+      "State Bank of India"
+    ],
+    "investments": [
+      "Zerodha",
+      "ELSS",
+      "SIP",
+      "mutual fund",
+      "equity",
+      "crypto",
+      "mutual funds"
+    ],
+    "time_period": "20 years",
+    "all_loan_amounts": [
+      65000,
+      300000,
+      3000000
+    ],
+    "all_emi_amounts": [
+      26500,
+      7200
+    ],
+    "all_sip_amounts": [
+      10000,
+      3000
+    ],
+    "all_loan_tenures": [
+      20,
+      3
+    ],
+    "all_interest_rates_loan": [
+      8.7,
+      13.0
+    ],
+    "total_emi_burden": 33700,
+    "total_loan_exposure": 3365000,
+    "loans": []
+  },
+  "estimated_income": 65000,
+  "summary": "Main ek 24 saal ka software engineer hoon jo Infosys me kaam karta hoon. Meri monthly salary \u20b965,000 hai (in-hand)",
+  "user_emotion": "neutral",
+  "user_confidence": "medium",
+  "good_decisions": [],
+  "sentiment": "neutral",
+  "risk_score": 100,
+  "risk_level": "high",
+  "risk_explanation": "Risk is estimated from EMI-to-income balance and uncertainty markers in the conversation.",
+  "financial_advice": [
+    "Verify whether the EMI of 26500 fits the monthly budget before committing.",
+    "Confirm that the SIP amount of 10000 aligns with long-term goals and cash flow.",
+    "Review repayment options and total interest for the loan amount of 3000000."
+  ],
+  "confidence_score": 0.58
+}

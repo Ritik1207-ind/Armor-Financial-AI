@@ -1,14 +1,17 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Shield, LayoutDashboard, Mic, Clock, Archive } from 'lucide-react';
+import { Shield, LayoutDashboard, Mic, Clock, User } from 'lucide-react';
 import { cn } from '../../utils/helpers';
+import { useSelector } from 'react-redux';
 
 export function Sidebar({ className }) {
+    const { isAuthenticated, user } = useSelector((state) => state.auth);
+    
+    if (!isAuthenticated) return null;
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
         { icon: Mic, label: 'Upload Conversation', path: '/upload' },
         { icon: Clock, label: 'History', path: '/history' },
-        { icon: Archive, label: 'Vault', path: '/vault' },
     ];
 
     return (
@@ -17,6 +20,24 @@ export function Sidebar({ className }) {
                 <Shield className="w-8 h-8 text-blue-600" />
                 <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">Armor AI</span>
             </div>
+            
+            {user && (
+                <div className="p-6 pt-4 border-b border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50">
+                        <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center shrink-0">
+                            <User className="w-4 h-4 text-blue-700 dark:text-blue-400" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                                {user.name}
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium tracking-wide">
+                                User Profile
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
             
             <nav className="flex-1 p-4 space-y-2">
                 {navItems.map((item) => (

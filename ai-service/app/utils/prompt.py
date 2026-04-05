@@ -6,19 +6,22 @@ CRITICAL RULES:
 2. FORMAT: Return ONLY raw JSON. No markdown. No ```json tags.
 3. ENTITY EXTRACTION — YOU MUST EXTRACT ALL OF THESE:
    - `income`: The user's monthly income/salary/account balance. Look for words like "income", "salary", "account", "kamaata", "paisa".
-   - `emi_amount`: Monthly EMI payment. This is the MONTHLY installment, NOT the total loan.
-   - `sip_amount`: Monthly SIP investment amount.
-   - `loan_amount`: TOTAL loan principal (the big number). Example: "25 lakh loan" = 2500000.
-   - `loan_tenure_years`: Loan duration in years.
-   - `rate_of_interest_loan`: Loan interest rate as a number (e.g., 9.5 for 9.5%).
-   - `rate_of_interest_investment`: Investment/SIP/Mutual fund interest rate.
-   - `banks_mentioned`: ALL bank names mentioned (HDFC, SBI, ICICI, HTSC, etc.)
-   - `investments`: ALL investment types (SIP, mutual funds, RD, FD, Nifty 50, PPF, etc.)
-   - `time_period`: Any time duration mentioned ("25 years", "10 saal").
+   - `emi_amount`: Total combined monthly EMI payment across all loans.
+   - `sip_amount`: Total monthly SIP/Mutual fund investment.
+   - `total_loan_exposure`: The sum of all active loans principals.
+   - `loan_amount`: Primary (largest) loan amount.
+   - `loan_tenure_years`: Primary loan duration in years.
+   - `rate_of_interest_loan`: Primary loan interest rate.
+   - `rate_of_interest_investment`: Investment return rate ONLY (e.g., expected return on SIP/MF). DO NOT put personal/home loan interest rates here. If no explicit investment return rate is mentioned, return 0.0.
+   - `loans`: A list containing details for EVERY individual loan mentioned (type, amount, emi, interest_rate, tenure_years, bank).
+   - `all_interest_rates_loan`: List of all loan interest rates mentioned.
+   - `all_loan_tenures`: List of all loan tenures mentioned.
+   - `banks_mentioned`: ALL bank names mentioned (SBI, HDFC, etc.)
+   - `investments`: ALL investment types (SIP, mutual funds, RD, crypto, ELSS, etc.)
+   - `time_period`: Overall time horizons mentioned for goals.
    
-   IMPORTANT: Return numbers as RAW integers/floats only. No commas, no "Rs", no symbols.
-   IMPORTANT: If the user says "50000 rupees account" that IS their income. Extract it.
-   IMPORTANT: Extract EVERY bank name and EVERY investment type mentioned.
+   IMPORTANT: DO NOT mix up loan interest rates with investment returns.
+   IMPORTANT: The user may have MULTIPLE distinct loans (e.g., Home loan AND Personal loan). You MUST extract EVERY distinct loan into the `loans` list as a separate object. Do NOT combine them.
 
 4. SUMMARY: Write a COMPREHENSIVE summary that covers:
    - User's financial profile (income, expenses, obligations)
@@ -48,10 +51,23 @@ REQUIRED JSON SCHEMA (ALWAYS RETURN ALL FIELDS):
     "income": 0,
     "emi_amount": 0,
     "sip_amount": 0,
+    "total_loan_exposure": 0,
     "loan_amount": 0,
     "loan_tenure_years": 0,
     "rate_of_interest_loan": 0.0,
     "rate_of_interest_investment": 0.0,
+    "loans": [
+      {
+        "loan_type": "home loan",
+        "amount": 0,
+        "emi": 0,
+        "interest_rate": 0.0,
+        "tenure_years": 0,
+        "bank": "Bank Name"
+      }
+    ],
+    "all_loan_tenures": [],
+    "all_interest_rates_loan": [],
     "banks_mentioned": [],
     "investments": [],
     "time_period": ""

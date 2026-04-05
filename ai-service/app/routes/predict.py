@@ -1,7 +1,8 @@
 import base64
 import logging
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from typing import Optional
 from app.services.stt import transcribe_audio
 from app.services.pipeline import analyze_financial_conversation
 from app.utils.parser import normalize_numbers
@@ -14,7 +15,7 @@ router = APIRouter()
 class RequestModel(BaseModel):
     input_type: str
     data: str
-    filename: str = None
+    filename: Optional[str] = None
 
 @router.post("/predict", response_model=PredictResponse)
 async def predict_endpoint(req: RequestModel):
@@ -32,7 +33,7 @@ async def predict_endpoint(req: RequestModel):
             text = normalize_numbers(req.data)
             
         if not text or not text.strip():
-            return PredictResponse(**build_fallback_response())
+            raise HTTPException(status_code=503, detail="Audio transcription failed. The AI provider might be rate-limited.")
 
         result = await analyze_financial_conversation(text)
         return PredictResponse.model_validate(result)

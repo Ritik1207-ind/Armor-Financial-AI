@@ -51,22 +51,27 @@ async def analyze_financial_conversation(text: str) -> dict:
             }
         )
 
-        # Merge LLM entities — LLM overwrites regex only when the LLM value is truthy (non-zero)
+        # Merge LLM entities — LLM is primary source of truth.
         llm_entities = llm_result.get("entities") or {}
         for key, value in llm_entities.items():
-            if value:  # only overwrite if LLM actually found something (not 0, not None, not "")
+            # If the value is explicitly provided (even zero or empty array), we trust the LLM,
+            # except when the LLM specifically fails to extract basic quantities that regex found.
+            if value is not None and value != "":
+                # For critical amounts we might still prefer truthy values if LLM output is 0 but regex found it
+                if key in ["income", "emi_amount", "sip_amount", "loan_amount", "total_loan_exposure"] and not value and response["entities"].get(key):
+                    continue
                 response["entities"][key] = value
-
-        # Map old regex keys to new schema keys so frontend sees them
-        ents = response["entities"]
-        if ents.get("emi") and not ents.get("emi_amount"):
-            ents["emi_amount"] = ents["emi"]
-        if ents.get("sip") and not ents.get("sip_amount"):
-            ents["sip_amount"] = ents["sip"]
 
         # Update estimated_income from LLM if available
         if llm_result.get("estimated_income"):
             response["estimated_income"] = llm_result["estimated_income"]
+
+    # Map old regex keys to new schema keys so frontend sees them
+    ents = response["entities"]
+    if ents.get("emi") and not ents.get("emi_amount"):
+        ents["emi_amount"] = ents["emi"]
+    if ents.get("sip") and not ents.get("sip_amount"):
+        ents["sip_amount"] = ents["sip"]
 
     # Final risk recalculation with merged data
     final_emi = response["entities"].get("emi_amount") or response["entities"].get("emi")

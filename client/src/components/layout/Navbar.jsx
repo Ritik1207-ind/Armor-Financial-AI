@@ -1,12 +1,21 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Menu, Moon, Sun, Bell } from 'lucide-react';
 import { toggleTheme } from '../../store/slices/appSlice';
+import { logout } from '../../store/slices/authSlice';
 import { Button } from '../ui/Button';
+import { Menu, Moon, Sun, Bell, LogOut } from 'lucide-react';
 
 export function Navbar({ onMenuClick }) {
     const dispatch = useDispatch();
     const theme = useSelector((state) => state.app.theme);
+    const { user, isAuthenticated } = useSelector((state) => state.auth);
+
+    const handleLogout = () => {
+        dispatch(logout());
+        window.location.href = '/login';
+    };
+
+    if (!isAuthenticated) return null; // Or show a minimal navbar
 
     return (
         <header className="sticky top-0 z-30 flex items-center justify-between px-6 py-4 glass border-b border-slate-200/50 dark:border-slate-800/50">
@@ -27,14 +36,12 @@ export function Navbar({ onMenuClick }) {
                 <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="w-9 h-9 p-0 rounded-full"
-                    onClick={() => dispatch(toggleTheme())}
+                    className="w-9 h-9 p-0 rounded-full text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    onClick={handleLogout}
+                    title="Logout"
                 >
-                    {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                    <LogOut className="w-5 h-5" />
                 </Button>
-                <div className="w-9 h-9 ml-2 rounded-full bg-gradient-to-tr from-blue-500 to-emerald-400 border border-white/20 shadow-sm flex items-center justify-center text-white font-medium text-sm">
-                    S
-                </div>
             </div>
         </header>
     );

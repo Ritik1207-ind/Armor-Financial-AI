@@ -1,0 +1,55 @@
+﻿{
+    "transcription":  "I have a salary of 50000 and I am paying an EMI of 15000 for a home loan",
+    "language":  "english",
+    "is_financial":  true,
+    "entities":  {
+                     "income":  50000,
+                     "emi_amount":  15000,
+                     "sip_amount":  0,
+                     "loan_amount":  15000,
+                     "total_loan_exposure":  0,
+                     "loan_tenure_years":  0,
+                     "rate_of_interest_loan":  0.0,
+                     "rate_of_interest_investment":  0.0,
+                     "banks_mentioned":  [
+
+                                         ],
+                     "investments":  [
+
+                                     ],
+                     "time_period":  null,
+                     "loans":  [
+                                   {
+                                       "loan_type":  "home loan",
+                                       "amount":  0,
+                                       "emi":  15000,
+                                       "interest_rate":  0.0,
+                                       "tenure_years":  0,
+                                       "bank":  "Not mentioned"
+                                   }
+                               ],
+                     "all_loan_tenures":  [
+
+                                          ],
+                     "all_interest_rates_loan":  [
+
+                                                 ]
+                 },
+    "estimated_income":  50000,
+    "summary":  "The user has a monthly salary of 50000 and is paying an EMI of 15000 for a home loan. The user\u0027s financial obligations seem significant, with 30% of their income going towards the home loan EMI. There is no information about other loans, investments, or savings.",
+    "user_emotion":  "anxious",
+    "user_confidence":  "low",
+    "good_decisions":  [
+
+                       ],
+    "sentiment":  "neutral",
+    "risk_score":  50,
+    "risk_level":  "medium",
+    "risk_explanation":  "The EMI-to-income ratio is 30%, which is relatively high and may pose a risk to the user\u0027s financial stability.",
+    "financial_advice":  [
+                             "Consider reviewing your budget to optimize expenses and allocate a larger portion towards savings and investments.",
+                             "You may want to explore options to reduce your home loan EMI, such as refinancing or negotiating with your lender.",
+                             "It is essential to create an emergency fund to cover at least 3-6 months of living expenses to mitigate potential financial risks."
+                         ],
+    "confidence_score":  0.71
+}

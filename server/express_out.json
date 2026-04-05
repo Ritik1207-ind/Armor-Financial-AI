@@ -1,0 +1,65 @@
+{
+  "version": "v1",
+  "conversation_id": "69d1c6661369166ae75f95aa",
+  "transcription": "Main ek 24 saal ka software engineer hoon jo Infosys me kaam karta hoon. Meri monthly salary ₹65000 hai (in-hand).\n\nMere upar ek home loan chal raha hai jo maine State Bank of India se liya tha ₹3000000 ka, interest rate 8.7% annual hai aur tenure 20 saal ka hai.\nIska EMI ₹26500 per month jaata hai.\n\nIske alawa maine ek personal loan bhi liya tha ₹300000 ka from HDFC Bank, jiska interest rate 13% hai aur EMI ₹7200 per month hai (remaining tenure 3 saal).",
+  "summary": "User is a 24-year-old software engineer with a monthly salary of ₹65,000. He has two loans: a home loan of ₹30,00,000 from State Bank of India with an interest rate of 8.7% and a tenure of 20 years, and a personal loan of ₹3,00,000 from HDFC Bank with an interest rate of 13% and a tenure of 3 years. His total loan exposure is ₹30,00,000.",
+  "entities": {
+    "income": 65000,
+    "emi_amount": 32700,
+    "sip_amount": 0,
+    "loan_amount": 3000000,
+    "total_loan_exposure": 3000000,
+    "loan_tenure_years": 20,
+    "rate_of_interest_loan": 8.7,
+    "rate_of_interest_investment": 0,
+    "banks_mentioned": [
+      "State Bank of India",
+      "HDFC Bank"
+    ],
+    "investments": [],
+    "time_period": "20 years",
+    "loans": [
+      {
+        "loan_type": "home loan",
+        "amount": 3000000,
+        "emi": 26500,
+        "interest_rate": 8.7,
+        "tenure_years": 20,
+        "bank": "State Bank of India"
+      },
+      {
+        "loan_type": "personal loan",
+        "amount": 300000,
+        "emi": 7200,
+        "interest_rate": 13,
+        "tenure_years": 3,
+        "bank": "HDFC Bank"
+      }
+    ],
+    "all_loan_tenures": [
+      20,
+      3
+    ],
+    "all_interest_rates_loan": [
+      8.7,
+      13
+    ]
+  },
+  "sentiment": "neutral",
+  "user_emotion": "anxious",
+  "user_confidence": "low",
+  "is_financial": true,
+  "good_decisions": [
+    "Investing in SIPs",
+    "Tracking EMI"
+  ],
+  "risk_score": 80,
+  "risk_level": "high",
+  "status": "processed",
+  "created_at": "2026-04-05T02:18:14.909Z",
+  "financial_advice": [
+    "Total interest payable for home loan: ₹1,23,19,919. Total interest payable for personal loan: ₹1,03,919. Monthly breakdown: Home loan: ₹1,32,500. Personal loan: ₹10,800.",
+    "Future value of SIP at 5 years: ₹1,23,19,919. Future value of SIP at 10 years: ₹2,46,39,838. Future value of SIP at 15 years: ₹4,92,79,676. Future value of SIP at 20 years: ₹9,85,59,352. Future value of SIP at 25 years: ₹19,71,18,704.",
+    "Net worth projection after loan completion: ₹1,23,19,919 (home loan) + ₹1,03,919 (personal loan) = ₹1,24,23,838."
+  ]
+}

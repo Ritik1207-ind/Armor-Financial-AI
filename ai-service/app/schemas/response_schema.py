@@ -3,20 +3,35 @@ from typing import List, Optional
 import re
 
 
+class LoanDetail(BaseModel):
+    """Represents a single loan with all its terms."""
+    loan_type: Optional[str] = None        # "home loan", "personal loan", "car loan"
+    amount: Optional[int] = None           # Principal amount
+    emi: Optional[int] = None              # Monthly EMI
+    interest_rate: Optional[float] = None  # Annual interest rate %
+    tenure_years: Optional[int] = None     # Tenure in years
+    bank: Optional[str] = None             # Lending bank
+
+
 class EntitiesModel(BaseModel):
     income: Optional[int] = None
-    emi_amount: Optional[int] = None
-    sip_amount: Optional[int] = None
-    loan_amount: Optional[int] = None
-    loan_tenure_years: Optional[int] = None
-    rate_of_interest_loan: Optional[float] = None
-    rate_of_interest_investment: Optional[float] = None
+    emi_amount: Optional[int] = None          # Total combined EMI burden
+    sip_amount: Optional[int] = None          # Total combined SIP investment
+    loan_amount: Optional[int] = None         # Primary (largest) loan
+    total_loan_exposure: Optional[int] = None # Sum of ALL loan principals
+    loan_tenure_years: Optional[int] = None   # Primary loan tenure
+    rate_of_interest_loan: Optional[float] = None       # Primary loan rate
+    rate_of_interest_investment: Optional[float] = None # Investment return rate (SIP/MF ONLY)
     banks_mentioned: List[str] = Field(default_factory=list)
     investments: List[str] = Field(default_factory=list)
     time_period: Optional[str] = None
+    # Multi-loan structured data
+    loans: List[LoanDetail] = Field(default_factory=list)
+    all_loan_tenures: List[int] = Field(default_factory=list)
+    all_interest_rates_loan: List[float] = Field(default_factory=list)
 
     @field_validator(
-        "income", "emi_amount", "sip_amount", "loan_amount",
+        "income", "emi_amount", "sip_amount", "loan_amount", "total_loan_exposure",
         "loan_tenure_years", "rate_of_interest_loan", "rate_of_interest_investment",
         mode="before",
     )

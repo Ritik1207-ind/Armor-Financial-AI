@@ -7,6 +7,7 @@ import { Mic, Square, Loader2, CheckCircle, UploadCloud } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { addConversation } from '../store/slices/conversationSlice';
+import toast from 'react-hot-toast';
 
 export default function Upload() {
     const [isRecording, setIsRecording] = useState(false);
@@ -51,12 +52,12 @@ export default function Upload() {
                 setActiveStream(null);
             };
 
-            mediaRecorder.start(1000); // Request data every second
+            mediaRecorder.start(); // Stream as a single continuous chunk to avoid webm header corruption
             setIsRecording(true);
             setResult(null);
         } catch (err) {
             console.error("Microphone access denied", err);
-            alert("Could not access microphone. Please check permissions.");
+            toast.error("Could not access microphone. Please check permissions.");
         }
     };
 
@@ -96,7 +97,7 @@ export default function Upload() {
             dispatch(addConversation(data));
         } catch (error) {
             console.error("Failed to process", error);
-            alert("Error: " + (error.response?.data?.message || "AI Analysis Failed. Check if Server and AI-Service are running."));
+            toast.error("Error: " + (error.response?.data?.message || "AI Analysis Failed. Check if Server and AI-Service are running."));
         } finally {
             setIsProcessing(false);
         }
@@ -236,7 +237,7 @@ export default function Upload() {
                                             <div key={key} className="flex flex-col justify-center border-b border-slate-100 dark:border-slate-800 pb-2">
                                                 <span className="text-sm font-semibold capitalize text-slate-500 mb-1">{key.replace('_', ' ')}</span>
                                                 <div className="flex flex-wrap gap-1">
-                                                    {val.length > 0 ? val.map((v, i) => <span key={i} className="font-medium text-xs text-indigo-700 bg-indigo-100 dark:bg-indigo-900 dark:text-indigo-300 px-2 py-0.5 rounded-full">{v}</span>) : <span className="text-slate-400 text-xs">None identified</span>}
+                                                    {val.length > 0 ? val.map((v, i) => <span key={i} className="font-medium text-xs text-indigo-700 bg-indigo-100 dark:bg-indigo-900 dark:text-indigo-300 px-2 py-0.5 rounded-full">{typeof v === 'object' && v !== null ? `${v.loan_type ? v.loan_type.toUpperCase() : 'LOAN'}: ₹${v.amount ? v.amount.toLocaleString() : 0}` : v}</span>) : <span className="text-slate-400 text-xs">None identified</span>}
                                                 </div>
                                             </div>
                                         )

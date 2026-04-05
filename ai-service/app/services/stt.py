@@ -106,7 +106,15 @@ async def _transcribe_with_groq(audio_bytes: bytes, mime_type: str, ext: str) ->
     return ""
 
 def _clean_stt(text: str) -> str:
-    text = normalize_numbers(text)
+    text = normalize_numbers(text).strip()
+
+    # Whisper hallucination filters (often generated on silent or corrupted audio)
+    lower_text = text.lower()
+    hallucinations = [
+        "none none none", "none.", "none", "you.", "thank you.", "thank you", "bye.", "subscribe.", "watch."
+    ]
+    if lower_text in hallucinations or "none none" in lower_text or len(lower_text) < 2:
+        return ""
 
     corrections = {
         " im ": " emi ",

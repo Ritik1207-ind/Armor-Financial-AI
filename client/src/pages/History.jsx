@@ -1,16 +1,69 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { fetchDashboardData } from '../services/api';
-import { setHistory } from '../store/slices/conversationSlice';
+import { fetchDashboardData, fetchConversation, deleteConversation } from '../services/api';
+import { setHistory, removeConversation } from '../store/slices/conversationSlice';
 import { formatDate } from '../utils/helpers';
-import { Search, Filter, ShieldAlert, FileText, Activity } from 'lucide-react';
+import { Search, Filter, ShieldAlert, FileText, Activity, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import toast from 'react-hot-toast';
 
 export default function History() {
     const dispatch = useDispatch();
     const history = useSelector((state) => state.conversation.history);
     const [loading, setLoading] = useState(history.length === 0);
+    const [expandedId, setExpandedId] = useState(null);
+    const [loadingDetails, setLoadingDetails] = useState(false);
+    const [detailsData, setDetailsData] = useState({});
+
+    const handleExpand = async (convId) => {
+        if (expandedId === convId) {
+            setExpandedId(null);
+            return;
+        }
+        setExpandedId(convId);
+        if (!detailsData[convId]) {
+            setLoadingDetails(true);
+            try {
+                const data = await fetchConversation(convId);
+                setDetailsData(prev => ({ ...prev, [convId]: data }));
+            } catch (err) {
+                console.error("Failed to fetch conversation details", err);
+            } finally {
+                setLoadingDetails(false);
+            }
+        }
+    };
+
+    const handleDelete = (convId, e) => {
+        if (e) e.stopPropagation();
+        
+        toast((t) => (
+            <div className="flex flex-col gap-3 min-w-[200px]">
+                <span className="font-medium">Delete this conversation?</span>
+                <div className="flex gap-2">
+                    <Button 
+                        size="sm" 
+                        className="bg-red-500 hover:bg-red-600 text-white" 
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                await deleteConversation(convId);
+                                dispatch(removeConversation(convId));
+                                toast.success("Conversation deleted");
+                            } catch (error) {
+                                toast.error("Failed to delete conversation.");
+                                console.error(error);
+                            }
+                        }}
+                    >
+                        Delete
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => toast.dismiss(t.id)}>Cancel</Button>
+                </div>
+            </div>
+        ), { duration: 5000, position: 'top-center' });
+    };
 
     useEffect(() => {
         if (history.length === 0) {
@@ -79,7 +132,7 @@ export default function History() {
                                                 </span>
                                             )}
                                         </div>
-                                        <h3 className="text-lg font-medium leading-snug">
+                                        <h3 className="text-base font-medium leading-snug">
                                             {conv.snippet || conv.summary || "Conversation transcribed. Review required."}
                                         </h3>
                                     </div>
@@ -101,11 +154,82 @@ export default function History() {
                                         
                                         <div className="w-px h-8 bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
                                         
-                                        <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 px-3">
-                                            View Details
-                                        </Button>
+                                        <div className="flex gap-1 items-center">
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 px-2"
+                                                onClick={(e) => handleDelete(conv.id || conv._id, e)}
+                                                title="Delete Conversation"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 px-3"
+                                                onClick={() => handleExpand(conv.id || conv._id)}
+                                            >
+                                                {expandedId === (conv.id || conv._id) ? "Hide Details" : "View More"}
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
+                                {expandedId === (conv.id || conv._id) && (
+                                    <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        {loadingDetails && !detailsData[conv.id || conv._id] ? (
+                                            <div className="flex justify-center p-4">
+                                                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+                                            </div>
+                                        ) : detailsData[conv.id || conv._id] ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm mb-1 text-blue-600">Summary</h4>
+                                                        <p className="text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                                                            {detailsData[conv.id || conv._id].insight?.summary || "No summary available."}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm mb-1 text-blue-600">Extracted Datapoints</h4>
+                                                        <div className="flex flex-wrap gap-2 text-sm bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                                                            {Object.entries(detailsData[conv.id || conv._id].insight?.entities || {}).map(([key, val]) => (
+                                                                <span key={key} className="bg-white dark:bg-slate-700 px-2 py-1 rounded border border-slate-200 dark:border-slate-600">
+                                                                    <strong>{key}:</strong> {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                                                                </span>
+                                                            ))}
+                                                            {Object.keys(detailsData[conv.id || conv._id].insight?.entities || {}).length === 0 && <span className="text-slate-500">No entities extracted.</span>}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm mb-1 text-blue-600">Psychological Profile</h4>
+                                                        <div className="grid grid-cols-2 gap-2 text-sm bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                                                            <div><span className="text-slate-500 w-20 inline-block text-right pr-2">Sentiment:</span> {detailsData[conv.id || conv._id].conversation?.sentiment || "N/A"}</div>
+                                                            <div><span className="text-slate-500 w-20 inline-block text-right pr-2">Emotion:</span> {detailsData[conv.id || conv._id].conversation?.user_emotion || "N/A"}</div>
+                                                            <div className="col-span-2"><span className="text-slate-500 w-20 inline-block text-right pr-2">Confidence:</span> {detailsData[conv.id || conv._id].conversation?.user_confidence || "N/A"}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm mb-1 text-blue-600">Financial Insights</h4>
+                                                        <ul className="list-disc pl-5 text-sm text-slate-600 dark:text-slate-400 space-y-1 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                                                            {Array.isArray(detailsData[conv.id || conv._id].insight?.financial_advice) && detailsData[conv.id || conv._id].insight.financial_advice.length > 0 ? (
+                                                                detailsData[conv.id || conv._id].insight.financial_advice.map((tip, idx) => (
+                                                                    <li key={idx}>{typeof tip === 'object' ? JSON.stringify(tip) : String(tip)}</li>
+                                                                ))
+                                                            ) : (
+                                                                <li className="list-none text-slate-500">No specific advice available.</li>
+                                                            )}
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center p-4 text-red-500 text-sm">Failed to load details.</div>
+                                        )}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     ))

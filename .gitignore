@@ -17,3 +17,10 @@ yarn-error.log*
 # Python
 venv/
 __pycache__/
+
+# Environments and uploads
+**/.env
+**/.env.*
+**/uploads/
+**/recording/
+**/recordings/

@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { fetchDashboardData, clearDashboardData } from '../services/api';
+import { fetchDashboardData, clearDashboardData, updateDashboardInsight } from '../services/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { Activity, ShieldAlert, TrendingUp, Users, Trash2, RefreshCw } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function Dashboard() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isResetting, setIsResetting] = useState(false);
     const [error, setError] = useState(null);
+    
+    // Editor State
+    const [editingInsight, setEditingInsight] = useState(null);
+    const [editForm, setEditForm] = useState({ sip: '', loan: '', emi: '', income: '' });
 
     const loadDocs = async () => {
         setLoading(true);
@@ -29,18 +34,37 @@ export default function Dashboard() {
         loadDocs();
     }, []);
 
-    const handleReset = async () => {
-        if (!window.confirm("Are you sure you want to delete all stored data? This action cannot be undone.")) return;
+    const handleReset = (e) => {
+        if (e) e.preventDefault();
         
-        setIsResetting(true);
-        try {
-            await clearDashboardData();
-            await loadDocs(); // Reload with fresh state
-        } catch (err) {
-            alert("Failed to reset dashboard: " + err.message);
-        } finally {
-            setIsResetting(false);
-        }
+        toast((t) => (
+            <div className="flex flex-col gap-3 min-w-[250px]">
+                <span className="font-medium">Reset dashboard data?</span>
+                <span className="text-xs text-slate-500">This action cannot be undone.</span>
+                <div className="flex gap-2 mt-1">
+                    <Button 
+                        size="sm" 
+                        className="bg-red-500 hover:bg-red-600 text-white flex-1" 
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            setIsResetting(true);
+                            try {
+                                await clearDashboardData();
+                                await loadDocs();
+                                toast.success("Dashboard reset successfully");
+                            } catch (err) {
+                                toast.error("Failed to reset dashboard: " + err.message);
+                            } finally {
+                                setIsResetting(false);
+                            }
+                        }}
+                    >
+                        Yes, Wipe Data
+                    </Button>
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => toast.dismiss(t.id)}>Cancel</Button>
+                </div>
+            </div>
+        ), { duration: 6000, position: 'top-center' });
     };
 
     if (loading && !data) {
@@ -61,7 +85,30 @@ export default function Dashboard() {
         );
     }
 
-    const formatEntityData = (obj) => Object.keys(obj).map(key => ({ name: key.toUpperCase().replace(/_/g, ' '), value: obj[key] }));
+    const formatEntityData = (obj) => Object.keys(obj || {}).map(key => ({ name: key.toUpperCase().replace(/_/g, ' '), value: obj[key] }));
+    const formatYAxis = (val) => new Intl.NumberFormat('en-IN', { notation: "compact", compactDisplay: "short" }).format(val);
+    const formatCurrency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0}).format(val);
+
+    const handleEditClick = (insight) => {
+        setEditingInsight(insight.insight_id);
+        setEditForm({
+            sip: insight.sip || 0,
+            loan: insight.loan || 0,
+            emi: insight.emi || 0,
+            income: insight.income || 0
+        });
+    };
+
+    const handleSaveEdit = async () => {
+        try {
+            await updateDashboardInsight(editingInsight, editForm);
+            toast.success("Extraction updated manually.");
+            setEditingInsight(null);
+            loadDashboard();
+        } catch (error) {
+            toast.error("Failed to update extractions");
+        }
+    };
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -136,68 +183,157 @@ export default function Dashboard() {
                 </Card>
             </div>
 
-            {/* Charts Section */}
+            {/* Financial Quadrant Section */}
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50 mt-8 mb-4">Financial Quadrant (Timeline)</h2>
             <div className="grid gap-4 md:grid-cols-2">
+                
+                {/* SIP Chart */}
                 <Card className="col-span-1">
                     <CardHeader className="p-6 pb-2">
-                        <CardTitle>Risk Trend</CardTitle>
+                        <CardTitle>SIP Portfolio Tracking</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 pt-0 h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={data.risk_trend}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                                <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `${val}`} />
-                                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                <Line type="monotone" dataKey="risk_score" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                            </LineChart>
-                        </ResponsiveContainer>
+                        {(data.sip_trend || []).length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={data.sip_trend}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
+                                    <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatYAxis} />
+                                    <Tooltip 
+                                        formatter={(value) => [formatCurrency(value), 'SIP Total']}
+                                        contentStyle={{ backgroundColor: '#1e293b', borderRadius: '8px', border: '1px solid #334155', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.5)' }} 
+                                        labelStyle={{ color: '#cbd5e1', fontWeight: '500', paddingBottom: '4px' }}
+                                    />
+                                    <Line type="monotone" dataKey="sip" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} label={{ position: 'top', fontSize: 10, fill: '#64748b', formatter: formatYAxis }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        ) : (
+                             <div className="flex items-center justify-center h-full text-slate-500">No SIPs tracked yet.</div>
+                        )}
                     </CardContent>
                 </Card>
 
+                {/* Loan Chart */}
                 <Card className="col-span-1">
                     <CardHeader className="p-6 pb-2">
-                        <CardTitle>Entity Mentions</CardTitle>
+                        <CardTitle>Outstanding Loan Exposure</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 pt-0 h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={formatEntityData(data.entity_distribution)}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                                <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                <Bar dataKey="value" fill="#10b981" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        {(data.loan_trend || []).length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={data.loan_trend}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
+                                    <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatYAxis} />
+                                    <Tooltip 
+                                        formatter={(value) => [formatCurrency(value), 'Loan Exposure']}
+                                        contentStyle={{ backgroundColor: '#1e293b', borderRadius: '8px', border: '1px solid #334155', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.5)' }} 
+                                        labelStyle={{ color: '#cbd5e1', fontWeight: '500', paddingBottom: '4px' }}
+                                    />
+                                    <Line type="monotone" dataKey="loan" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} label={{ position: 'top', fontSize: 10, fill: '#64748b', formatter: formatYAxis }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        ) : (
+                             <div className="flex items-center justify-center h-full text-slate-500">No Loans tracked yet.</div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* EMI Chart */}
+                <Card className="col-span-1">
+                    <CardHeader className="p-6 pb-2">
+                        <CardTitle>Monthly EMI Burden</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 pt-0 h-[300px]">
+                        {(data.emi_trend || []).length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={data.emi_trend}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
+                                    <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatYAxis} />
+                                    <Tooltip 
+                                        formatter={(value) => [formatCurrency(value), 'EMI Total']}
+                                        contentStyle={{ backgroundColor: '#1e293b', borderRadius: '8px', border: '1px solid #334155', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.5)' }} 
+                                        labelStyle={{ color: '#cbd5e1', fontWeight: '500', paddingBottom: '4px' }}
+                                    />
+                                    <Line type="monotone" dataKey="emi" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} label={{ position: 'top', fontSize: 10, fill: '#64748b', formatter: formatYAxis }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        ) : (
+                             <div className="flex items-center justify-center h-full text-slate-500">No EMIs tracked yet.</div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Income Trend Line Chart */}
+                <Card className="col-span-1">
+                    <CardHeader className="p-6 pb-2">
+                        <CardTitle>Income Timeline Tracker</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 pt-0 h-[300px]">
+                        {(data.income_trend || []).length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={data.income_trend}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
+                                    <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={formatYAxis} />
+                                    <Tooltip 
+                                        formatter={(value) => [formatCurrency(value), 'Income']}
+                                        contentStyle={{ backgroundColor: '#1e293b', borderRadius: '8px', border: '1px solid #334155', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.5)' }} 
+                                        labelStyle={{ color: '#cbd5e1', fontWeight: '500', paddingBottom: '4px' }}
+                                    />
+                                    <Line type="monotone" dataKey="income" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} label={{ position: 'top', fontSize: 10, fill: '#64748b', formatter: formatYAxis }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        ) : (
+                             <div className="flex items-center justify-center h-full text-slate-500">No Income history yet.</div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
-            
-            {/* Recent Insights */}
+
+            {/* AI Portfolio Overrides */}
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50 mt-8 mb-4">Manage AI Extractions</h2>
             <Card>
                 <CardHeader className="p-6 pb-2">
-                    <CardTitle>Recent Insights</CardTitle>
+                    <CardTitle>Timeline History Overrides</CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 pt-4">
+                <CardContent className="p-6">
                     <div className="space-y-4">
-                        {data.recent_conversations.map(conv => (
-                            <div key={conv.id} className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 last:border-0 last:pb-0">
-                                <div className="space-y-1">
-                                    <p className="text-sm font-medium leading-none">{conv.snippet}</p>
-                                    <p className="text-xs text-slate-500">{conv.date}</p>
-                                </div>
-                                <div className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                                    conv.risk_level === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                    conv.risk_level === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                }`}>
-                                    {conv.risk_level.toUpperCase()}
-                                </div>
+                        {(data.portfolio_trends || []).map((t) => (
+                            <div key={t.insight_id} className="flex flex-col sm:flex-row items-center justify-between p-4 border rounded-lg bg-slate-50/50 dark:bg-slate-900/50">
+                                <div className="font-medium text-sm w-full sm:w-1/4">Date: {t.date}</div>
+                                {editingInsight === t.insight_id ? (
+                                    <div className="flex items-center space-x-2 w-full mt-2 sm:mt-0 max-w-2xl">
+                                        <div className="flex flex-col"><span className="text-[10px] text-slate-500">SIP</span><input type="number" className="border rounded p-1 w-20 text-xs" value={editForm.sip} onChange={e => setEditForm({...editForm, sip: e.target.value})} /></div>
+                                        <div className="flex flex-col"><span className="text-[10px] text-slate-500">LOAN</span><input type="number" className="border rounded p-1 w-20 text-xs" value={editForm.loan} onChange={e => setEditForm({...editForm, loan: e.target.value})} /></div>
+                                        <div className="flex flex-col"><span className="text-[10px] text-slate-500">EMI</span><input type="number" className="border rounded p-1 w-20 text-xs" value={editForm.emi} onChange={e => setEditForm({...editForm, emi: e.target.value})} /></div>
+                                        <div className="flex flex-col"><span className="text-[10px] text-slate-500">INCOME</span><input type="number" className="border rounded p-1 w-20 text-xs" value={editForm.income} onChange={e => setEditForm({...editForm, income: e.target.value})} /></div>
+                                        <div className="flex space-x-1 ml-auto mt-4">
+                                            <Button size="sm" onClick={handleSaveEdit}>Save</Button>
+                                            <Button size="sm" variant="outline" onClick={() => setEditingInsight(null)}>Cancel</Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex w-full mt-2 sm:mt-0 justify-between items-center max-w-2xl">
+                                        <div className="flex space-x-6 text-sm text-slate-600 dark:text-slate-300">
+                                            <div><span className="font-semibold">SIP:</span> {formatCurrency(t.sip)}</div>
+                                            <div><span className="font-semibold">LOAN:</span> {formatCurrency(t.loan)}</div>
+                                            <div><span className="font-semibold">EMI:</span> {formatCurrency(t.emi)}</div>
+                                            <div><span className="font-semibold">INCOME:</span> {formatCurrency(t.income)}</div>
+                                        </div>
+                                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(t)}>Edit</Button>
+                                    </div>
+                                )}
                             </div>
                         ))}
+                        {(!data.portfolio_trends || data.portfolio_trends.length === 0) && (
+                            <div className="text-center text-slate-500 text-sm py-4">No portfolio history to modify.</div>
+                        )}
                     </div>
                 </CardContent>
             </Card>
+            
         </div>
     );
 }

@@ -26,9 +26,10 @@ const safeJsonParse = (response) => {
 };
 
 exports.analyzeConversation = async (req, res, next) => {
-  const { user_id, input_type, text, language_hint = 'auto' } = req.body;
+  const { input_type, text, language_hint = 'auto' } = req.body;
+  const user_id = req.user.id;
 
-  if (!user_id || !input_type) {
+  if (!input_type) {
     return res.status(400).json({ error: 'Missing required fields user_id or input_type' });
   }
 
@@ -135,9 +136,7 @@ exports.analyzeConversation = async (req, res, next) => {
 
 exports.getHistory = async (req, res, next) => {
   try {
-    const { user_id } = req.query;
-    if (!user_id) return res.status(400).json({ error: 'user_id required' });
-
+    const user_id = req.user.id;
     const conversations = await Conversation.find({ user_id }).sort({ createdAt: -1 });
     res.json(conversations);
   } catch (error) {
@@ -180,6 +179,26 @@ exports.editTranscript = async (req, res, next) => {
     if (!transcript) return res.status(404).json({ error: 'Transcript not found' });
 
     res.json(transcript);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteConversation = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const user_id = req.user.id;
+
+    const conversation = await Conversation.findOne({ _id: id, user_id });
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found or unauthorized' });
+    }
+
+    await Insight.deleteOne({ conversation_id: id });
+    await Transcript.deleteOne({ conversation_id: id });
+    await Conversation.deleteOne({ _id: id });
+
+    res.json({ message: 'Conversation deleted successfully', id });
   } catch (error) {
     next(error);
   }

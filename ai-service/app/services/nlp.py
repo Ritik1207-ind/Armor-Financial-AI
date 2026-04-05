@@ -1,15 +1,11 @@
 import os
+import logging
 from functools import lru_cache
 from typing import Any
 
-import asyncio
 from huggingface_hub import AsyncInferenceClient
 
-try:
-    from transformers import pipeline
-except Exception:  # pragma: no cover - optional at runtime
-    pipeline = None
-
+logger = logging.getLogger("armor.nlp")
 
 HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
 TOPIC_MODEL = os.getenv("HF_TOPIC_MODEL", "facebook/bart-large-mnli")
@@ -20,27 +16,7 @@ SUMMARY_MODEL = os.getenv("HF_SUMMARY_MODEL", "sshleifer/distilbart-cnn-12-6")
 def _hf_client() -> AsyncInferenceClient | None:
     if not HF_API_TOKEN:
         return None
-    return AsyncInferenceClient(api_key=HF_API_TOKEN)
-
-
-@lru_cache(maxsize=1)
-def _topic_classifier():
-    if pipeline is None:
-        return None
-    try:
-        return pipeline("zero-shot-classification", model=TOPIC_MODEL)
-    except Exception:
-        return None
-
-
-@lru_cache(maxsize=1)
-def _summarizer():
-    if pipeline is None:
-        return None
-    try:
-        return pipeline("summarization", model=SUMMARY_MODEL)
-    except Exception:
-        return None
+    return AsyncInferenceClient(api_key=HF_API_TOKEN, timeout=15)
 
 
 def _fallback_financial_detection(text: str) -> tuple[bool, float]:
@@ -67,16 +43,8 @@ def _fallback_financial_detection(text: str) -> tuple[bool, float]:
 
 async def detect_financial_topic(text: str) -> tuple[bool, float]:
     labels = ["financial conversation", "general conversation"]
-    classifier = _topic_classifier()
-    if classifier is not None:
-        try:
-            result = await asyncio.to_thread(classifier, text, candidate_labels=labels, multi_label=False)
-            label = result["labels"][0]
-            score = float(result["scores"][0])
-            return label == "financial conversation", round(score, 2)
-        except Exception:
-            pass
 
+    # Try remote HuggingFace Inference API only (no local model loading)
     client = _hf_client()
     if client is not None:
         try:
@@ -89,8 +57,8 @@ async def detect_financial_topic(text: str) -> tuple[bool, float]:
             label = result.labels[0]
             score = float(result.scores[0])
             return label == "financial conversation", round(score, 2)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"HF topic classification failed, using fallback: {e}")
 
     return _fallback_financial_detection(text)
 
@@ -99,23 +67,17 @@ async def summarize_financial_text(text: str) -> str:
     if len(text.split()) < 8:
         return text.strip()
 
-    summarizer = _summarizer()
-    if summarizer is not None:
-        try:
-            result = await asyncio.to_thread(summarizer, text, max_length=60, min_length=12, do_sample=False)
-            return result[0]["summary_text"].strip()
-        except Exception:
-            pass
-
+    # Try remote HuggingFace Inference API only (no local model loading)
     client = _hf_client()
     if client is not None:
         try:
             output = await client.summarization(text, model=SUMMARY_MODEL)
             summary = getattr(output, "summary_text", None) or str(output)
             return summary.strip()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"HF summarization failed, using fallback: {e}")
 
+    # Fast local fallback — just take the first 2 sentences
     sentences = [segment.strip() for segment in text.replace("\n", " ").split(".") if segment.strip()]
     return ". ".join(sentences[:2]).strip() or text[:220].strip()
 

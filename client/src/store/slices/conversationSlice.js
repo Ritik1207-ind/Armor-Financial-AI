@@ -19,9 +19,12 @@ const conversationSlice = createSlice({
     },
     setHistory: (state, action) => {
       state.history = action.payload;
+    },
+    removeConversation: (state, action) => {
+      state.history = state.history.filter(conv => conv.id !== action.payload && conv._id !== action.payload);
     }
   }
 });
 
-export const { setLoading, setError, addConversation, setHistory } = conversationSlice.actions;
+export const { setLoading, setError, addConversation, setHistory, removeConversation } = conversationSlice.actions;
 export default conversationSlice.reducer;
