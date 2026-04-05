@@ -11,7 +11,7 @@ async def call_llm(prompt: str, is_retry: bool = False) -> dict:
     user_content = f"Input text: {prompt}"
 
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": "llama-3.1-8b-instant" if is_retry else "llama-3.3-70b-versatile",
         "messages": [
             {"role": "system", "content": sys_content},
             {"role": "user", "content": user_content}
@@ -43,5 +43,6 @@ async def analyze_text(text: str) -> dict:
             return await call_llm(prompt=text, is_retry=(attempt > 0))
         except Exception as e:
             last_err = e
+            print(f"Attempt {attempt} failed: {e}")
 
     return {}

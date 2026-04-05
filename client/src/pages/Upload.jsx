@@ -18,6 +18,7 @@ export default function Upload() {
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
     const fileInputRef = useRef(null);
+    const [activeStream, setActiveStream] = useState(null);
     
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -25,21 +26,32 @@ export default function Upload() {
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream);
+            setActiveStream(stream);
+            
+            // Check for supported mime types
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+                ? 'audio/webm;codecs=opus' 
+                : 'audio/webm';
+                
+            const mediaRecorder = new MediaRecorder(stream, { mimeType });
             mediaRecorderRef.current = mediaRecorder;
             audioChunksRef.current = [];
 
             mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) audioChunksRef.current.push(event.data);
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
             };
 
             mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-                const file = new File([audioBlob], "recording.webm", { type: 'audio/webm' });
+                const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+                const extension = mimeType.includes('webm') ? 'webm' : 'ogg';
+                const file = new File([audioBlob], `recording.${extension}`, { type: mimeType });
                 processInteraction({ audio_file: file, user_id: 'test_user_123', input_type: 'audio' });
+                setActiveStream(null);
             };
 
-            mediaRecorder.start();
+            mediaRecorder.start(1000); // Request data every second
             setIsRecording(true);
             setResult(null);
         } catch (err) {
@@ -102,7 +114,7 @@ export default function Upload() {
                     
                     <div className="h-24 flex items-center justify-center">
                         {isRecording ? (
-                            <AudioVisualizer isRecording={true} className="text-blue-500" />
+                            <AudioVisualizer isRecording={true} stream={activeStream} className="text-blue-500" />
                         ) : (
                             <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
                                 <Mic className="w-10 h-10 text-blue-500" />
@@ -187,19 +199,136 @@ export default function Upload() {
                 </CardContent>
             </Card>
 
-            {/* Results Preview */}
+            {/* Results Preview Detailed View */}
             {result && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-6 flex flex-col items-center text-center space-y-4">
-                    <CheckCircle className="w-12 h-12 text-emerald-500" />
-                    <div>
-                        <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-100">Analysis Complete!</h3>
-                        <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-1 max-w-md mx-auto">
-                            "{result.summary || "Conversation processed successfully."}"
+                <div className="space-y-6 mt-8 animate-in fade-in slide-in-from-bottom-4">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-4 flex flex-col items-center text-center space-y-2">
+                        <CheckCircle className="w-10 h-10 text-emerald-500" />
+                        <h3 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">Analysis Acquired</h3>
+                        <p className="text-sm text-emerald-700 dark:text-emerald-400 max-w-lg mx-auto">
+                            The AI Engine has successfully dissected your conversation into actionable insights below.
                         </p>
                     </div>
-                    <Button variant="outline" onClick={() => navigate('/history')} className="mt-2 bg-white dark:bg-[#020617] border-emerald-200 dark:border-emerald-800">
-                        View Full Details
-                    </Button>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Summary Block */}
+                        <Card className="col-span-1 md:col-span-2 border-2 border-blue-500/10">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-lg text-blue-600 dark:text-blue-400">Intelligence Summary</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                                    {result.summary || "No summary was generated."}
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        {/* Entities Data Block */}
+                        <Card className="col-span-1 md:col-span-2 border border-indigo-200 dark:border-indigo-900/50">
+                            <CardHeader className="pb-2 bg-indigo-50/50 dark:bg-indigo-900/10">
+                                <CardTitle className="text-lg text-indigo-600 dark:text-indigo-400">Extracted Datapoints</CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {Object.entries(result.entities || {}).map(([key, val]) => {
+                                    // Handle string arrays
+                                    if (Array.isArray(val)) {
+                                        return (
+                                            <div key={key} className="flex flex-col justify-center border-b border-slate-100 dark:border-slate-800 pb-2">
+                                                <span className="text-sm font-semibold capitalize text-slate-500 mb-1">{key.replace('_', ' ')}</span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {val.length > 0 ? val.map((v, i) => <span key={i} className="font-medium text-xs text-indigo-700 bg-indigo-100 dark:bg-indigo-900 dark:text-indigo-300 px-2 py-0.5 rounded-full">{v}</span>) : <span className="text-slate-400 text-xs">None identified</span>}
+                                                </div>
+                                            </div>
+                                        )
+                                    }
+                                    const isRate = key.toLowerCase().includes('rate_of_interest') || key.toLowerCase().includes('rate');
+                                    const isTime = key.toLowerCase().includes('tenure') || key.toLowerCase().includes('year') || key.toLowerCase().includes('month');
+                                    return (
+                                        <div key={key} className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
+                                            <span className="text-sm font-semibold capitalize text-slate-500">{key.replace(/_/g, ' ')}</span>
+                                            <span className="font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded">
+                                                {typeof val === 'number' && val > 0 
+                                                    ? (isRate ? `${val}%` : isTime ? `${val}` : `₹${val.toLocaleString()}`) 
+                                                    : (val || 'None')}
+                                            </span>
+                                        </div>
+                                    )
+                                })}
+                            </CardContent>
+                        </Card>
+
+                        {/* Psychology & Behavior Block */}
+                        <Card className="col-span-1 border border-purple-200 dark:border-purple-900/50">
+                            <CardHeader className="pb-2 bg-purple-50/50 dark:bg-purple-900/10">
+                                <CardTitle className="text-lg text-purple-600 dark:text-purple-400">Psychology & Profile</CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-4 space-y-4">
+                                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 px-4 py-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                                    <span className="text-sm font-semibold text-slate-500">Conversation Type</span>
+                                    <span className={`font-bold capitalize px-2 py-0.5 rounded-full text-xs ${result.is_financial ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'}`}>
+                                        {result.is_financial ? 'Financial' : 'Non-Financial'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 px-4 py-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                                    <span className="text-sm font-semibold text-slate-500">Detected Emotion</span>
+                                    <span className="font-bold text-slate-800 dark:text-slate-200 capitalize">{result.user_emotion || 'Neutral'}</span>
+                                </div>
+                                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 px-4 py-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                                    <span className="text-sm font-semibold text-slate-500">Confidence Level</span>
+                                    <span className="font-bold text-slate-800 dark:text-slate-200 capitalize">{result.user_confidence || 'Medium'}</span>
+                                </div>
+                                {result.good_decisions && result.good_decisions.length > 0 && (
+                                    <div className="pt-2">
+                                        <span className="text-sm font-semibold text-slate-500 mb-2 block">Strong User Decisions Identified:</span>
+                                        <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300 list-disc pl-5">
+                                            {result.good_decisions.map((dec, i) => <li key={i} className="leading-snug">{dec}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Consultation Advice Block */}
+                        <Card className="col-span-1 border border-emerald-200 dark:border-emerald-900/50">
+                            <CardHeader className="pb-2 bg-emerald-50/50 dark:bg-emerald-900/10">
+                                <CardTitle className="text-lg text-emerald-600 dark:text-emerald-400">Financial Consultation</CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-4">
+                                {result.financial_advice && result.financial_advice.length > 0 ? (
+                                    <ul className="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+                                        {result.financial_advice.map((advice, i) => (
+                                            <li key={i} className="flex gap-2 items-start">
+                                                <div className="h-6 w-6 shrink-0 flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 mt-0.5 font-bold text-xs">
+                                                    {i + 1}
+                                                </div>
+                                                <span className="leading-tight">{advice}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-sm text-slate-500">No specific advice available for this context.</p>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Original Transcript */}
+                        <Card className="col-span-1 md:col-span-2">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm text-slate-500 font-medium">Original Transcription</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="bg-slate-50 dark:bg-[#020617]/50 p-4 rounded-lg font-mono text-sm text-slate-600 dark:text-slate-400 italic border border-slate-200 dark:border-slate-800">
+                                    "{result.transcription}"
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="flex justify-center mt-4">
+                        <Button variant="outline" onClick={() => navigate('/history')} className="min-w-[200px]">
+                            Go to Complete History
+                        </Button>
+                    </div>
                 </div>
             )}
         </div>

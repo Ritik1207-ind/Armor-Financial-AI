@@ -35,17 +35,19 @@ exports.getDashboard = async (req, res, next) => {
     const convIds = conversations.map(c => c._id);
     const insights = await Insight.find({ conversation_id: { $in: convIds } });
 
-    const entity_distribution = { emi: 0, loan: 0, sip: 0 };
+    const entity_distribution = {};
 
     for (const inst of insights) {
       const dateStr = inst.createdAt ? inst.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
       if (inst.confidence_score !== undefined) {
         confidence_trend.push({ date: dateStr, confidence: inst.confidence_score });
       }
-      if (inst.entities) {
-        if (Array.isArray(inst.entities.emis)) entity_distribution.emi += inst.entities.emis.length;
-        if (Array.isArray(inst.entities.loans)) entity_distribution.loan += inst.entities.loans.length;
-        if (Array.isArray(inst.entities.sips)) entity_distribution.sip += inst.entities.sips.length;
+      if (inst.entities && typeof inst.entities === 'object') {
+        Object.entries(inst.entities).forEach(([key, value]) => {
+          if (typeof value === 'number' && value > 0) {
+            entity_distribution[key] = (entity_distribution[key] || 0) + value;
+          }
+        });
       }
     }
 
@@ -70,11 +72,31 @@ exports.getDashboard = async (req, res, next) => {
       total_conversations: total_conversations || 0,
       risk_trend: risk_trend || [],
       confidence_trend: confidence_trend || [],
-      entity_distribution: entity_distribution || { emi: 0, loan: 0, sip: 0 },
+      entity_distribution: entity_distribution || {},
       sentiment_distribution: sentiment_distribution || { positive: 0, neutral: 0, negative: 0 },
       recent_conversations: recent || [],
       key_insights: insights.slice(-5) || []
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.clearDashboardData = async (req, res, next) => {
+  try {
+    const { user_id } = req.body;
+    if (!user_id) return res.status(400).json({ error: 'user_id required' });
+
+    const conversations = await Conversation.find({ user_id });
+    const convIds = conversations.map(c => c._id);
+
+    const Transcript = require('../models/Transcript');
+    
+    await Insight.deleteMany({ conversation_id: { $in: convIds } });
+    await Transcript.deleteMany({ conversation_id: { $in: convIds } });
+    await Conversation.deleteMany({ user_id });
+
+    res.json({ message: "Dashboard history successfully cleared." });
   } catch (error) {
     next(error);
   }

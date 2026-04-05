@@ -11,6 +11,8 @@ const conversationSchema = new mongoose.Schema({
   risk_level: { type: String, enum: ['low', 'medium', 'high'] },
   risk_explanation: { type: String },
   sentiment: { type: String },
+  user_emotion: { type: String },
+  user_confidence: { type: String },
   status: { type: String, enum: ['processing', 'processed', 'failed'], default: 'processing' },
   error_reason: { type: String },
   version: { type: String, default: 'v1' },

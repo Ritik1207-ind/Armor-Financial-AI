@@ -4,17 +4,18 @@ const logger = require('../utils/logger');
 
 const AI_URL = env.AI_SERVICE_URL;
 
-const predict = async (inputType, data, languageHint = 'auto') => {
+const predict = async (inputType, data, languageHint = 'auto', filename = null) => {
   try {
     const payload = {
       input_type: inputType,
       data: data,
       language_hint: languageHint,
+      filename: filename,
       version: 'v1'
     };
 
     const response = await axios.post(`${AI_URL}/predict`, payload, {
-      timeout: 30000
+      timeout: 90000
     });
 
     return response.data;

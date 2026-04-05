@@ -64,7 +64,8 @@ exports.analyzeConversation = async (req, res, next) => {
   }
 
   try {
-    const rawAiResponse = await aiService.predict(input_type, dataForAi, language_hint);
+    const originalFilename = req.file ? req.file.originalname : null;
+    const rawAiResponse = await aiService.predict(input_type, dataForAi, language_hint, originalFilename);
     const parsedData = typeof rawAiResponse === 'string' ? safeJsonParse(rawAiResponse) : rawAiResponse;
 
     const transcript = await Transcript.create({
@@ -78,7 +79,8 @@ exports.analyzeConversation = async (req, res, next) => {
     const insights = await Insight.create({
       conversation_id: conversation._id,
       summary: parsedData.summary,
-      entities: parsedData.entities || { emis: [], sips: [], loans: [] },
+      entities: parsedData.entities || {},
+      good_decisions: parsedData.good_decisions || [],
       financial_advice: parsedData.financial_advice || [],
       confidence_score: parsedData.confidence_score
     });
@@ -91,6 +93,8 @@ exports.analyzeConversation = async (req, res, next) => {
     conversation.risk_level = parsedData.risk_level;
     conversation.risk_explanation = parsedData.risk_explanation;
     conversation.sentiment = parsedData.sentiment;
+    conversation.user_emotion = parsedData.user_emotion;
+    conversation.user_confidence = parsedData.user_confidence;
     
     await conversation.save();
 
@@ -101,10 +105,15 @@ exports.analyzeConversation = async (req, res, next) => {
       summary: insights.summary,
       entities: insights.entities,
       sentiment: conversation.sentiment,
+      user_emotion: conversation.user_emotion,
+      user_confidence: conversation.user_confidence,
+      is_financial: conversation.is_financial,
+      good_decisions: insights.good_decisions,
       risk_score: conversation.risk_score,
       risk_level: conversation.risk_level,
       status: conversation.status,
-      created_at: conversation.createdAt
+      created_at: conversation.createdAt,
+      financial_advice: insights.financial_advice
     });
 
   } catch (error) {

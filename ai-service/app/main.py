@@ -6,19 +6,22 @@ Run with: uvicorn app.main:app --reload --port 8000
 """
 
 import os
+import sys
 import logging
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 
+# ─── Load Environment FIRST (before any app imports that read env vars) ────────
+from dotenv import load_dotenv
+load_dotenv()
+
+# Ensure the 'app' package is discoverable
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 
 from app.routes.predict import router as predict_router
-
-# ─── Load Environment ──────────────────────────────────────────────────────────
-
-load_dotenv()
 
 # ─── Logging Configuration ────────────────────────────────────────────────────
 

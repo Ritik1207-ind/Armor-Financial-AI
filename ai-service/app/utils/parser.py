@@ -3,13 +3,42 @@ import re
 from typing import Optional
 
 def normalize_numbers(text: str) -> str:
-    """Normalize regional numbers: '10k' -> 10000, '15 hazaar' -> 15000"""
+    """Normalize regional numbers: '10k' -> 10000, '15 hazaar' -> 15000, '1,00,000' -> 100000"""
     text = str(text)
+    
+    # Strip commas from within numbers
+    text = re.sub(r'(\d),(\d)', r'\1\2', text)
+    text = re.sub(r'(\d),(\d)', r'\1\2', text) # second pass for overlapping
+    
+    # Word-based number replacements (speech output)
+    word_map = {
+        r'\bten\s+thousand\b': '10000',
+        r'\btwenty\s+thousand\b': '20000',
+        r'\bthirty\s+thousand\b': '30000',
+        r'\bforty\s+thousand\b': '40000',
+        r'\bfifty\s+thousand\b': '50000',
+        r'\bsixty\s+thousand\b': '60000',
+        r'\bseventy\s+thousand\b': '70000',
+        r'\beighty\s+thousand\b': '80000',
+        r'\bninety\s+thousand\b': '90000',
+        r'\bone\s+lakhs?\b': '100000',
+        r'\btwo\s+lakhs?\b': '200000',
+        r'\bfive\s+lakhs?\b': '500000',
+        r'\bten\s+lakhs?\b': '1000000',
+        r'\btwenty\s+five\s+lakhs?\b': '2500000',
+        r'\bdas\s+hazaar\b': '10000',
+        r'\bbees\s+hazaar\b': '20000',
+        r'\btees\s+hazaar\b': '30000',
+        r'\bpachaas\s+hazaar\b': '50000',
+    }
+    for pat, val in word_map.items():
+        text = re.sub(pat, val, text, flags=re.IGNORECASE)
+    
     patterns = [
-        (r'(?<![\.\d])(\d+(?:\.\d+)?)\s*[kK]\b', 1000),
-        (r'(?<![\.\d])(\d+(?:\.\d+)?)\s*(?:hazaar|hazar|thousand)\b', 1000),
-        (r'(?<![\.\d])(\d+(?:\.\d+)?)\s*(?:lakh|lac|l)\b', 100000),
-        (r'(?<![\.\d])(\d+(?:\.\d+)?)\s*(?:crore|cr)\b', 10000000)
+        (r'(?<![.\d])(\d+(?:\.\d+)?)\s*[kK]\b', 1000),
+        (r'(?<![.\d])(\d+(?:\.\d+)?)\s*(?:hazaar|hazar|thousands?|thousand)\b', 1000),
+        (r'(?<![.\d])(\d+(?:\.\d+)?)\s*(?:lakhs?|lacs?|l)\b', 100000),
+        (r'(?<![.\d])(\d+(?:\.\d+)?)\s*(?:crores?|cr)\b', 10000000)
     ]
     for pattern, multiplier in patterns:
         def repl(m):

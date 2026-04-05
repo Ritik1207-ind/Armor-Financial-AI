@@ -4,10 +4,10 @@ const insightSchema = new mongoose.Schema({
   conversation_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true },
   summary: { type: String },
   entities: {
-    emis: [{ amount: Number, duration_months: Number }],
-    sips: [mongoose.Schema.Types.Mixed],
-    loans: [mongoose.Schema.Types.Mixed]
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
   },
+  good_decisions: [String],
   financial_advice: [String],
   confidence_score: { type: Number },
 }, { timestamps: true });

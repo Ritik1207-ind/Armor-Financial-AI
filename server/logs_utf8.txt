@@ -1,0 +1,3 @@
+﻿Γùç injecting env (6) from .env // tip: Γîÿ custom filepath { path: '/custom/path/.env' }
+{"level":"INFO","message":"MongoDB Connected: ac-makvhzq-shard-00-00.gasm6h9.mongodb.net","timestamp":"2026-04-04T20:48:09.126Z"}
+{"level":"INFO","message":"Server running in development mode on port 5000","timestamp":"2026-04-04T20:48:09.164Z"}

@@ -76,4 +76,20 @@ export const fetchHistory = async (user_id = 'test_user_123') => {
     }
 };
 
+/**
+ * Clear all dashboard data for a user.
+ * @param {string} user_id - The ID of the authenticated user.
+ */
+export const clearDashboardData = async (user_id = 'test_user_123') => {
+    try {
+        const response = await apiClient.delete('/dashboard/clear', {
+            data: { user_id }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('API Error: clearDashboardData', error);
+        throw error;
+    }
+};
+
 export default apiClient;
