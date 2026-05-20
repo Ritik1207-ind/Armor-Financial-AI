@@ -1,6 +1,4 @@
-Here’s a **clean, professional README.md** you can directly copy into your GitHub repo 👇
 
----
 
 # 🛡️ Armor – Financial Conversation Intelligence System
 
